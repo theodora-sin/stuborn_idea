@@ -14,6 +14,10 @@ Combines everything into one cohesive, styled tkinter app:
 Run with:  python stubborn_signup.py
 (Needs tkinter, which ships with most Python installs. On some Linux
 distros you may need to `sudo apt install python3-tk` first.)
+
+Keep duck.png in the SAME FOLDER as this file - the rubber duck popup
+loads it from disk. If duck.png is missing, or Pillow isn't installed,
+it quietly falls back to a plain duck emoji instead.
 """
 
 import tkinter as tk
@@ -21,6 +25,13 @@ from tkinter import ttk
 import random
 import calendar
 import webbrowser
+import os
+
+try:
+    from PIL import Image, ImageTk
+    _PIL_AVAILABLE = True
+except ImportError:
+    _PIL_AVAILABLE = False
 
 # ---------------------------------------------------------------------------
 # Theme - deliberately garish, clashing "so-bad-it-hurts" palette.
@@ -50,6 +61,11 @@ FONT_MARQUEE = ("Comic Sans MS", 13, "bold")
 TOTAL_TIME = 45  # seconds before the form gets wiped
 
 RICKROLL_URL = "https://www.youtube.com/watch?v=dQw4w9WgXcQ"
+
+DUCK_IMAGE_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), "duck.png")
+DUCK_IMAGE_SIZE = (130, 140)  # resized display size for the popup duck
+DUCK_INTERVAL_MS = 5000  # a new duck pops up this often
+DUCK_LIFETIME_MS = 8000  # each duck disappears on its own after this long
 
 # Colors the header/marquee/submit button strobe through - ugly on purpose.
 STROBE_COLORS = ["#ff0033", "#00e5ff", "#39ff14", "#fff200", "#ff66cc", "#9900ff"]
@@ -261,11 +277,14 @@ class StubbornSignupApp:
         self._strobe_index = 0
         self._marquee_index = 0
 
+        self._duck_image = self._load_duck_image()
+
         self._build_style()
         self._build_layout()
         self._start_countdown()
         self._tick_strobe()
         self._tick_marquee()
+        self._tick_duck()
 
     # -- styling --------------------------------------------------------
     def _build_style(self):
@@ -813,6 +832,58 @@ class StubbornSignupApp:
         self._marquee_index += 1
         self.marquee_label.config(text=text)
         self.root.after(1600, self._tick_marquee)
+
+    # -- rubber duck popup (appears every 15 seconds, unprompted) ---------
+    def _load_duck_image(self):
+        """
+        Load duck.png (resized) for the popup. Falls back to None if the
+        file is missing or Pillow isn't installed - _spawn_duck() then
+        falls back to a plain emoji instead.
+        """
+        if not os.path.exists(DUCK_IMAGE_PATH):
+            return None
+        try:
+            if _PIL_AVAILABLE:
+                img = Image.open(DUCK_IMAGE_PATH).convert("RGBA")
+                img = img.resize(DUCK_IMAGE_SIZE, Image.LANCZOS)
+                return ImageTk.PhotoImage(img)
+            else:
+                # No Pillow: tkinter's own PhotoImage can still show a PNG,
+                # just without smooth resizing (only whole-number shrinks).
+                return tk.PhotoImage(file=DUCK_IMAGE_PATH).subsample(2, 2)
+        except Exception:
+            return None
+
+    def _spawn_duck(self):
+        duck = tk.Toplevel(self.root)
+        duck.overrideredirect(True)  # no title bar/borders - looks like a sticker
+        duck.attributes("-topmost", True)
+        duck.configure(bg=CARD, highlightthickness=2, highlightbackground=BORDER)
+
+        width, height = DUCK_IMAGE_SIZE if self._duck_image is not None else (110, 110)
+
+        # Random spot inside the screen area.
+        max_x = max(self.root.winfo_screenwidth() - width, 0)
+        max_y = max(self.root.winfo_screenheight() - height, 0)
+        x = random.randint(0, max_x)
+        y = random.randint(0, max_y)
+        duck.geometry(f"{width}x{height}+{x}+{y}")
+
+        if self._duck_image is not None:
+            label = tk.Label(duck, image=self._duck_image, bg=CARD, borderwidth=0)
+            label.image = self._duck_image  # keep a reference so it isn't garbage-collected
+        else:
+            label = tk.Label(duck, text="\U0001F986", font=("Segoe UI Emoji", 48), bg=CARD)
+        label.pack(expand=True, fill="both")
+
+        # Click it to dismiss early; otherwise it disappears on its own.
+        duck.bind("<Button-1>", lambda e: duck.destroy())
+        label.bind("<Button-1>", lambda e: duck.destroy())
+        duck.after(DUCK_LIFETIME_MS, duck.destroy)
+
+    def _tick_duck(self):
+        self._spawn_duck()
+        self.root.after(DUCK_INTERVAL_MS, self._tick_duck)
 
     # -- countdown that wipes the form -----------------------------------
     def _start_countdown(self):
