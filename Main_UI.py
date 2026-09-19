@@ -1,6 +1,6 @@
 """
-Stubborn Signup - main UI
---------------------------
+Temu Sign Up Page - main UI
+----------------------------
 Combines everything that used to live in separate scripts into one
 cohesive, styled tkinter app:
 
@@ -9,7 +9,7 @@ cohesive, styled tkinter app:
   termandcon.py  -> scrollable, timed Terms & Conditions      (build_terms_section)
   date.py        -> "Pi Birthday Generator" instead of a      (build_birthday_section)
                     normal date-of-birth field
-  rickroll.py    -> the "reward" for finishing everything     (rickroll)
+  rickroll.py    -> the "reward" for hitting Create Account   (rickroll)
 
 Run with:  python stubborn_signup.py
 (Needs tkinter, which ships with most Python installs. On some Linux
@@ -23,18 +23,18 @@ import calendar
 import webbrowser
 
 # ---------------------------------------------------------------------------
-# Theme
+# Theme - loud orange/red "Temu" palette on a white background
 # ---------------------------------------------------------------------------
-BG = "#0f0f1a"
-CARD = "#1b1b2f"
-ENTRY_BG = "#12121f"
-BORDER = "#2e2e45"
-TEXT = "#e8e8f5"
-MUTED = "#8b8bab"
-ACCENT = "#ff5fa2"
-ACCENT_DARK = "#c93f7d"
-SUCCESS = "#5eead4"
-ERROR = "#ff6b6b"
+BG = "#fff4ea"
+CARD = "#ffffff"
+ENTRY_BG = "#fff7f0"
+BORDER = "#ffb37a"
+TEXT = "#231a12"
+MUTED = "#8a7361"
+ACCENT = "#fb7701"
+ACCENT_DARK = "#e35f00"
+SUCCESS = "#2ecc71"
+ERROR = "#ff3b30"
 
 FONT_TITLE = ("Segoe UI", 21, "bold")
 FONT_SUB = ("Segoe UI", 10)
@@ -151,7 +151,7 @@ def evaluate_password(pw):
 class StubbornSignupApp:
     def __init__(self, root):
         self.root = root
-        self.root.title("Stubborn Signup")
+        self.root.title("Temu Sign Up Page")
         self.root.configure(bg=BG)
         self.root.geometry("560x760")
         self.root.minsize(480, 600)
@@ -182,7 +182,7 @@ class StubbornSignupApp:
         style.configure("Title.TLabel", background=BG, foreground=TEXT, font=FONT_TITLE)
         style.configure("Sub.TLabel", background=BG, foreground=MUTED, font=FONT_SUB)
         style.configure("Header.TLabel", background=CARD, foreground=ACCENT, font=FONT_LABEL)
-        style.configure("Timer.TLabel", background=BG, foreground=ACCENT, font=FONT_LABEL)
+        style.configure("Timer.TLabel", background=BG, foreground=ERROR, font=FONT_LABEL)
         style.configure("Field.TLabel", background=CARD, foreground=MUTED, font=FONT_LABEL)
 
         style.configure(
@@ -239,9 +239,9 @@ class StubbornSignupApp:
         # Header (fixed, outside the scroll area)
         header = ttk.Frame(self.root, style="Root.TFrame", padding=(20, 18, 20, 6))
         header.pack(fill="x")
-        ttk.Label(header, text="Create Your Account", style="Title.TLabel").pack(anchor="w")
+        ttk.Label(header, text="Temu Sign Up Page", style="Title.TLabel").pack(anchor="w")
         ttk.Label(
-            header, text="It's just a signup form. How hard can it be?", style="Sub.TLabel"
+            header, text="Join now! Limited time offer!! (offer never ends)", style="Sub.TLabel"
         ).pack(anchor="w", pady=(2, 8))
 
         self.timer_label = ttk.Label(header, text="", style="Timer.TLabel")
@@ -323,11 +323,16 @@ class StubbornSignupApp:
         ttk.Label(
             card,
             text=(
-                "We don't trust you to remember your own birthday, so we'll "
-                "assign you one using the digits of pi."
+                "We don't trust you to type your own birthday, so instead you'll "
+                "pull a random 6-digit sequence out of the digits of pi. Each click "
+                "below drops you at a new random position in pi and reads off the "
+                "next 6 digits as DD/MM/YY. Keep clicking \"Roll again\" until the "
+                "sequence you land on actually matches your real birthday - that's "
+                "the only correct one, everything else doesn't count."
             ),
             foreground=MUTED,
             wraplength=460,
+            justify="left",
         ).pack(anchor="w", pady=(0, 10))
 
         reel = ttk.Frame(card)
