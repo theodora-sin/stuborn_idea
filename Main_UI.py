@@ -66,6 +66,10 @@ DUCK_IMAGE_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), "duck
 DUCK_IMAGE_SIZE = (130, 140)  # resized display size for the popup duck
 DUCK_INTERVAL_MS = 5000  # a new duck pops up this often
 DUCK_LIFETIME_MS = 8000  # each duck disappears on its own after this long
+DUCK_BG = "#ffd400"  # solid yellow behind the duck - no more pink showing through
+
+DODGE_AREA_SIZE = (460, 90)  # room the username field is allowed to roam in
+DODGE_THRESHOLD_PX = 55  # how close the mouse has to get before it flees
 
 # Colors the header/marquee/submit button strobe through - ugly on purpose.
 STROBE_COLORS = ["#ff0033", "#00e5ff", "#39ff14", "#fff200", "#ff66cc", "#9900ff"]
@@ -428,8 +432,48 @@ class StubbornSignupApp:
     def _build_account_section(self):
         card = self._card("Account details")
         ttk.Label(card, text="USERNAME", style="Field.TLabel").pack(anchor="w")
-        self.username_entry = self._entry(card)
-        self.username_entry.pack(fill="x", pady=(4, 0), ipady=4)
+
+        # A fixed-size "arena" the entry can be freely repositioned inside
+        # with place() - pack()/grid() can't move a widget around like this.
+        area_w, area_h = DODGE_AREA_SIZE
+        self.username_area = tk.Frame(card, bg=CARD, width=area_w, height=area_h)
+        self.username_area.pack(fill="x", pady=(4, 0))
+        self.username_area.pack_propagate(False)
+
+        self.username_entry = self._entry(self.username_area, width=24)
+        self.username_entry.place(x=10, y=15, height=28)
+
+        # Global motion bind (bind_all, like the scroll-wheel binds above)
+        # so we notice the mouse no matter which widget it's actually over.
+        self.root.bind_all("<Motion>", self._maybe_dodge_username, add="+")
+
+    def _maybe_dodge_username(self, event):
+        try:
+            ex = self.username_entry.winfo_rootx()
+            ey = self.username_entry.winfo_rooty()
+            ew = self.username_entry.winfo_width()
+            eh = self.username_entry.winfo_height()
+        except tk.TclError:
+            return  # widget destroyed or not yet drawn
+
+        # distance from the cursor to the nearest edge of the entry's box
+        dx = max(ex - event.x_root, 0, event.x_root - (ex + ew))
+        dy = max(ey - event.y_root, 0, event.y_root - (ey + eh))
+        distance = (dx * dx + dy * dy) ** 0.5
+
+        if distance < DODGE_THRESHOLD_PX:
+            self._dodge_username()
+
+    def _dodge_username(self):
+        area_w, area_h = DODGE_AREA_SIZE
+        entry_w = self.username_entry.winfo_width() or 150
+        entry_h = self.username_entry.winfo_height() or 28
+
+        max_x = max(area_w - entry_w - 5, 5)
+        max_y = max(area_h - entry_h - 5, 5)
+        new_x = random.randint(5, max_x)
+        new_y = random.randint(5, max_y)
+        self.username_entry.place(x=new_x, y=new_y)
 
     # -- section: password ----------------------------------------------
     def _build_password_section(self):
@@ -858,7 +902,8 @@ class StubbornSignupApp:
         duck = tk.Toplevel(self.root)
         duck.overrideredirect(True)  # no title bar/borders - looks like a sticker
         duck.attributes("-topmost", True)
-        duck.configure(bg=CARD, highlightthickness=2, highlightbackground=BORDER)
+        # Solid yellow, no border line at all (highlightthickness=0).
+        duck.configure(bg=DUCK_BG, highlightthickness=0)
 
         width, height = DUCK_IMAGE_SIZE if self._duck_image is not None else (110, 110)
 
@@ -870,10 +915,10 @@ class StubbornSignupApp:
         duck.geometry(f"{width}x{height}+{x}+{y}")
 
         if self._duck_image is not None:
-            label = tk.Label(duck, image=self._duck_image, bg=CARD, borderwidth=0)
+            label = tk.Label(duck, image=self._duck_image, bg=DUCK_BG, borderwidth=0, highlightthickness=0)
             label.image = self._duck_image  # keep a reference so it isn't garbage-collected
         else:
-            label = tk.Label(duck, text="\U0001F986", font=("Segoe UI Emoji", 48), bg=CARD)
+            label = tk.Label(duck, text="\U0001F986", font=("Segoe UI Emoji", 48), bg=DUCK_BG)
         label.pack(expand=True, fill="both")
 
         # Click it to dismiss early; otherwise it disappears on its own.
