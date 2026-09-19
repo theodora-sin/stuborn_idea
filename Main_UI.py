@@ -2,7 +2,7 @@
 Temu Sign Up Page - main UI
 ----------------------------
 Combines everything into one cohesive, styled tkinter app:
- 
+
   calculator.py  -> rigged "verify you're human" calculator   (build_calculator_section)
   password.py    -> ever-changing password rules              (evaluate_password)
   timer.py       -> countdown that wipes the form             (Countdown section)
@@ -10,44 +10,58 @@ Combines everything into one cohesive, styled tkinter app:
   date.py        -> "Pi Birthday Generator" instead of a       (build_birthday_section)
                     normal date-of-birth field
   rickroll.py    -> the "reward" for hitting Create Account    (rickroll)
- 
+
 Run with:  python stubborn_signup.py
 (Needs tkinter, which ships with most Python installs. On some Linux
 distros you may need to `sudo apt install python3-tk` first.)
 """
- 
+
 import tkinter as tk
 from tkinter import ttk
 import random
 import calendar
 import webbrowser
- 
+
 # ---------------------------------------------------------------------------
-# Theme - loud orange/red "Temu" palette on a white background
+# Theme - deliberately garish, clashing "so-bad-it-hurts" palette.
+# Loud lime background, hot-pink cards, screaming yellow fields, comic
+# fonts everywhere - a design that looks broken on purpose.
 # ---------------------------------------------------------------------------
-BG = "#fff4ea"
-CARD = "#ffffff"
-ENTRY_BG = "#fff7f0"
-BORDER = "#ffb37a"
-TEXT = "#231a12"
-MUTED = "#8a7361"
-ACCENT = "#fb7701"
-ACCENT_DARK = "#e35f00"
-SUCCESS = "#2ecc71"
-ERROR = "#ff3b30"
- 
-FONT_TITLE = ("Segoe UI", 21, "bold")
-FONT_SUB = ("Segoe UI", 10)
-FONT_LABEL = ("Segoe UI", 10, "bold")
-FONT_BODY = ("Segoe UI", 10)
-FONT_MONO = ("Consolas", 22, "bold")
-FONT_BTN = ("Segoe UI", 11, "bold")
-FONT_CALC_DISPLAY = ("Consolas", 18, "bold")
- 
+BG = "#ccff00"
+CARD = "#ff66cc"
+ENTRY_BG = "#fff200"
+BORDER = "#ff0000"
+TEXT = "#0d0d0d"
+MUTED = "#6600cc"
+ACCENT = "#00e5ff"
+ACCENT_DARK = "#0099ff"
+SUCCESS = "#39ff14"
+ERROR = "#ff0033"
+
+FONT_TITLE = ("Comic Sans MS", 24, "bold")
+FONT_SUB = ("Comic Sans MS", 11, "bold")
+FONT_LABEL = ("Comic Sans MS", 11, "bold")
+FONT_BODY = ("Comic Sans MS", 10)
+FONT_MONO = ("Comic Sans MS", 22, "bold")
+FONT_BTN = ("Comic Sans MS", 13, "bold")
+FONT_CALC_DISPLAY = ("Comic Sans MS", 18, "bold")
+FONT_MARQUEE = ("Comic Sans MS", 13, "bold")
+
 TOTAL_TIME = 45  # seconds before the form gets wiped
- 
+
 RICKROLL_URL = "https://www.youtube.com/watch?v=dQw4w9WgXcQ"
- 
+
+# Colors the header/marquee/submit button strobe through - ugly on purpose.
+STROBE_COLORS = ["#ff0033", "#00e5ff", "#39ff14", "#fff200", "#ff66cc", "#9900ff"]
+
+MARQUEE_MESSAGES = [
+    "!!! LIMITED TIME OFFER !!!",
+    "*** ACT NOW OR REGRET FOREVER ***",
+    ">>> 9,999,999 PEOPLE SIGNED UP TODAY <<<",
+    "!!! DO NOT CLOSE THIS WINDOW !!!",
+    "*** YOU HAVE BEEN SELECTED ***",
+]
+
 # First few hundred digits of pi, reused from the original date.py generator.
 PI_DIGITS = (
     "14159265358979323846264338327950288419716939937510582097494459230781640628"
@@ -55,45 +69,45 @@ PI_DIGITS = (
     "28481117450284102701938521105559644622948954930381964428810975665933446128"
     "47564823378678316527120190914564856692346034861045432664821339360726024914"
 )
- 
+
 TERMS_TEXT = """TERMS AND CONDITIONS
- 
+
 Last Updated: 18/9/2026
- 
+
 1. Acceptance of Terms
    By creating an account, you agree to be bound by these Terms and
    Conditions. If you do not agree, please do not proceed with registration.
- 
+
 2. Eligibility
    You must provide accurate information, including a truthful date and
    time of birth, and you confirm that you meet any minimum age
    requirement that applies in your jurisdiction.
- 
+
 3. Account Security
    You are responsible for maintaining the confidentiality of your
    password and for all activity that occurs under your account. Notify
    us immediately of any unauthorized use.
- 
+
 4. Acceptable Use
    You agree not to misuse the software, attempt to bypass its security
    controls, or use it for any unlawful purpose.
- 
+
 5. Data Handling
    Information you provide is stored to operate your account. We do not
    sell your personal data to third parties.
- 
+
 6. Governing Law
    These terms are governed by the laws applicable in your place of
    residence, without regard to conflict-of-law principles.
- 
+
 7. Contact
    Questions about these terms can be directed to the software's support
    channel.
- 
+
 -- End of Terms and Conditions --
 """
- 
- 
+
+
 # ---------------------------------------------------------------------------
 # Password rule engine (logic unchanged)
 # ---------------------------------------------------------------------------
@@ -102,7 +116,7 @@ def evaluate_password(pw):
     ever-shifting rules as the original standalone password.py."""
     if pw == "":
         return "Enter a password to begin.", False
- 
+
     checks = [
         (lambda p: len(p) < 8, "Password must be at least 8 characters."),
         (lambda p: len(p) < 12, "Actually... make it 12 characters."),
@@ -144,8 +158,8 @@ def evaluate_password(pw):
         if condition(pw):
             return message, False
     return "Password accepted! ...probably.", True
- 
- 
+
+
 # ---------------------------------------------------------------------------
 # Calculator "human verification" engine (capture / recapture)
 # ---------------------------------------------------------------------------
@@ -155,7 +169,7 @@ def make_calculation():
     Returns (a, b, op, correct_answer).
     """
     op = random.choice(["*", "/"])
- 
+
     if op == "*":
         a = random.randint(100, 999)
         b = random.randint(100, 999)
@@ -168,10 +182,10 @@ def make_calculation():
         a = divisor * quotient
         b = divisor
         answer = quotient
- 
+
     return a, b, op, answer
- 
- 
+
+
 def real_calculate(num1, op, num2):
     """The genuinely correct calculation."""
     if op == "+":
@@ -182,23 +196,23 @@ def real_calculate(num1, op, num2):
         return num1 * num2
     else:
         return num1 / num2 if num2 != 0 else 0
- 
- 
+
+
 def wrong_calculate(num1, op, num2):
     """Deliberately uses a different operator to get a wrong answer."""
     other_ops = [o for o in ("+", "-", "*", "/") if o != op]
     wrong_op = random.choice(other_ops)
     return real_calculate(num1, wrong_op, num2)
- 
- 
+
+
 def rigged_calculate(num1, op, num2, attempt_number):
     """Wrong method on attempts 1-2, correct method on attempt 3."""
     if attempt_number < 3:
         return wrong_calculate(num1, op, num2)
     else:
         return real_calculate(num1, op, num2)
- 
- 
+
+
 def parse_expression(expr):
     """
     Parse a typed expression like '948*383' into (num1, op, num2).
@@ -216,8 +230,8 @@ def parse_expression(expr):
             except ValueError:
                 return None
     return None
- 
- 
+
+
 # ---------------------------------------------------------------------------
 # App
 # ---------------------------------------------------------------------------
@@ -228,7 +242,7 @@ class StubbornSignupApp:
         self.root.configure(bg=BG)
         self.root.geometry("560x900")
         self.root.minsize(480, 640)
- 
+
         self.form_state = {
             "password_ok": False,
             "calculator_ok": False,
@@ -237,15 +251,22 @@ class StubbornSignupApp:
         }
         self.time_left = TOTAL_TIME
         self._countdown_job = None
- 
+
         # calculator state
         self.calc_attempt = 1
         self.calc_problem = None  # (a, b, op, correct_answer)
- 
+
+        # strobe/marquee state (purely cosmetic - part of the "bad on
+        # purpose" aesthetic)
+        self._strobe_index = 0
+        self._marquee_index = 0
+
         self._build_style()
         self._build_layout()
         self._start_countdown()
- 
+        self._tick_strobe()
+        self._tick_marquee()
+
     # -- styling --------------------------------------------------------
     def _build_style(self):
         style = ttk.Style(self.root)
@@ -253,7 +274,7 @@ class StubbornSignupApp:
             style.theme_use("clam")
         except tk.TclError:
             pass
- 
+
         style.configure("TFrame", background=CARD)
         style.configure("Root.TFrame", background=BG)
         style.configure("TLabel", background=CARD, foreground=TEXT, font=FONT_BODY)
@@ -262,7 +283,7 @@ class StubbornSignupApp:
         style.configure("Header.TLabel", background=CARD, foreground=ACCENT, font=FONT_LABEL)
         style.configure("Timer.TLabel", background=BG, foreground=ERROR, font=FONT_LABEL)
         style.configure("Field.TLabel", background=CARD, foreground=MUTED, font=FONT_LABEL)
- 
+
         style.configure(
             "Accent.TButton",
             background=ACCENT,
@@ -272,7 +293,7 @@ class StubbornSignupApp:
             padding=8,
         )
         style.map("Accent.TButton", background=[("active", ACCENT_DARK)])
- 
+
         style.configure(
             "Ghost.TButton",
             background=CARD,
@@ -282,7 +303,7 @@ class StubbornSignupApp:
             padding=6,
         )
         style.map("Ghost.TButton", background=[("active", BORDER)])
- 
+
         style.configure(
             "Calc.TButton",
             background=ENTRY_BG,
@@ -292,13 +313,13 @@ class StubbornSignupApp:
             padding=10,
         )
         style.map("Calc.TButton", background=[("active", BORDER)])
- 
+
         style.configure("TCheckbutton", background=CARD, foreground=TEXT, font=FONT_BODY)
         style.map("TCheckbutton", background=[("active", CARD)])
- 
+
         style.configure("TLabelframe", background=CARD, bordercolor=BORDER)
         style.configure("TLabelframe.Label", background=CARD, foreground=ACCENT, font=FONT_LABEL)
- 
+
         style.configure(
             "Vertical.TScrollbar",
             background=CARD,
@@ -306,7 +327,7 @@ class StubbornSignupApp:
             bordercolor=BG,
             arrowcolor=TEXT,
         )
- 
+
     def _entry(self, parent, **kwargs):
         e = tk.Entry(
             parent,
@@ -321,9 +342,21 @@ class StubbornSignupApp:
             **kwargs,
         )
         return e
- 
+
     # -- layout -----------------------------------------------------------
     def _build_layout(self):
+        # Flashing, obnoxious marquee strip - plain tk.Label so its colors
+        # can be strobed freely without fighting the ttk style system.
+        self.marquee_label = tk.Label(
+            self.root,
+            text=MARQUEE_MESSAGES[0],
+            font=FONT_MARQUEE,
+            bg=STROBE_COLORS[0],
+            fg="#ffffff",
+            pady=6,
+        )
+        self.marquee_label.pack(fill="x")
+
         # Header (fixed, outside the scroll area)
         header = ttk.Frame(self.root, style="Root.TFrame", padding=(20, 18, 20, 6))
         header.pack(fill="x")
@@ -331,59 +364,59 @@ class StubbornSignupApp:
         ttk.Label(
             header, text="Join now! Limited time offer!! (offer never ends)", style="Sub.TLabel"
         ).pack(anchor="w", pady=(2, 8))
- 
+
         self.timer_label = ttk.Label(header, text="", style="Timer.TLabel")
         self.timer_label.pack(anchor="w")
- 
+
         # Scrollable body
         outer = tk.Frame(self.root, bg=BG)
         outer.pack(fill="both", expand=True, padx=20, pady=(0, 20))
- 
+
         canvas = tk.Canvas(outer, bg=BG, highlightthickness=0)
         scrollbar = ttk.Scrollbar(outer, orient="vertical", command=canvas.yview)
         self.body = ttk.Frame(canvas, style="Root.TFrame")
- 
+
         self.body.bind(
             "<Configure>", lambda e: canvas.configure(scrollregion=canvas.bbox("all"))
         )
         canvas.create_window((0, 0), window=self.body, anchor="nw", width=520)
         canvas.configure(yscrollcommand=scrollbar.set)
- 
+
         canvas.pack(side="left", fill="both", expand=True)
         scrollbar.pack(side="right", fill="y")
- 
+
         def _on_mousewheel(event):
             canvas.yview_scroll(int(-1 * (event.delta / 120)), "units")
- 
+
         canvas.bind_all("<MouseWheel>", _on_mousewheel)  # Windows / macOS
         canvas.bind_all("<Button-4>", lambda e: canvas.yview_scroll(-1, "units"))  # Linux
         canvas.bind_all("<Button-5>", lambda e: canvas.yview_scroll(1, "units"))
- 
+
         self._build_account_section()
         self._build_password_section()
         self._build_calculator_section()
         self._build_birthday_section()
         self._build_terms_section()
         self._build_submit_section()
- 
+
     def _card(self, title):
         frame = ttk.Frame(self.body, padding=16)
         frame.pack(fill="x", pady=(0, 14))
         ttk.Label(frame, text=title, style="Header.TLabel").pack(anchor="w", pady=(0, 10))
         return frame
- 
+
     # -- section: username --------------------------------------------
     def _build_account_section(self):
         card = self._card("Account details")
         ttk.Label(card, text="USERNAME", style="Field.TLabel").pack(anchor="w")
         self.username_entry = self._entry(card)
         self.username_entry.pack(fill="x", pady=(4, 0), ipady=4)
- 
+
     # -- section: password ----------------------------------------------
     def _build_password_section(self):
         card = self._card("Choose a password")
         ttk.Label(card, text="PASSWORD", style="Field.TLabel").pack(anchor="w")
- 
+
         row = ttk.Frame(card)
         row.pack(fill="x", pady=(4, 8))
         self.password_entry = self._entry(row, show="•")
@@ -391,12 +424,12 @@ class StubbornSignupApp:
         ttk.Button(
             row, text="Check", style="Ghost.TButton", command=self._check_password
         ).pack(side="left", padx=(8, 0))
- 
+
         self.password_feedback = ttk.Label(
             card, text="Enter a password to begin.", foreground=MUTED, wraplength=460
         )
         self.password_feedback.pack(anchor="w")
- 
+
     def _check_password(self):
         pw = self.password_entry.get()
         message, ok = evaluate_password(pw)
@@ -405,7 +438,7 @@ class StubbornSignupApp:
             text=message, foreground=SUCCESS if ok else ERROR
         )
         self._refresh_submit_state()
- 
+
     # -- section: calculator (capture / recapture human check) ------------
     def _build_calculator_section(self):
         card = self._card("Verify you're human")
@@ -419,10 +452,10 @@ class StubbornSignupApp:
             wraplength=460,
             justify="left",
         ).pack(anchor="w", pady=(0, 10))
- 
+
         self.calc_problem_label = ttk.Label(card, text="", style="Header.TLabel")
         self.calc_problem_label.pack(anchor="w", pady=(0, 8))
- 
+
         self.calc_display_var = tk.StringVar()
         display = tk.Entry(
             card,
@@ -437,10 +470,10 @@ class StubbornSignupApp:
             highlightbackground=BORDER,
         )
         display.pack(fill="x", ipady=6, pady=(0, 10))
- 
+
         keypad = ttk.Frame(card)
         keypad.pack(anchor="w")
- 
+
         button_layout = [
             ("7", 0, 0), ("8", 0, 1), ("9", 0, 2), ("/", 0, 3),
             ("4", 1, 0), ("5", 1, 1), ("6", 1, 2), ("*", 1, 3),
@@ -457,39 +490,39 @@ class StubbornSignupApp:
             else:
                 command = lambda char=label: self._on_calc_digit(char)
                 style_name = "Calc.TButton"
- 
+
             ttk.Button(
                 keypad, text=label, width=5, style=style_name, command=command,
             ).grid(row=row, column=col, padx=2, pady=2)
- 
+
         self.calc_feedback = ttk.Label(card, text="", foreground=MUTED, wraplength=460)
         self.calc_feedback.pack(anchor="w", pady=(10, 0))
- 
+
         self._start_new_calc_attempt()
- 
+
     def _start_new_calc_attempt(self):
         self.calc_problem = make_calculation()
         a, b, op, _answer = self.calc_problem
         self.calc_problem_label.config(text=f"Solve: {a} {op} {b} = ?")
         self.calc_display_var.set("")
         self.calc_feedback.config(text="", foreground=MUTED)
- 
+
     def _on_calc_digit(self, char):
         self.calc_display_var.set(self.calc_display_var.get() + char)
- 
+
     def _on_calc_clear(self):
         self.calc_display_var.set("")
- 
+
     def _on_calc_equals(self):
         parsed = parse_expression(self.calc_display_var.get())
         if not parsed:
             self.calc_display_var.set("Error")
             return
- 
+
         num1, op, num2 = parsed
         result = rigged_calculate(num1, op, num2, self.calc_attempt)
         self.calc_display_var.set(str(result))
- 
+
         if self.calc_attempt < 3:
             self.calc_feedback.config(text="That's wrong, try again.", foreground=ERROR)
             self.calc_attempt += 1
@@ -502,12 +535,12 @@ class StubbornSignupApp:
             )
             self.form_state["calculator_ok"] = True
             self._refresh_submit_state()
- 
+
     def _reset_calculator(self):
         self.calc_attempt = 1
         self.form_state["calculator_ok"] = False
         self._start_new_calc_attempt()
- 
+
     # -- section: birthday (pi generator) --------------------------------
     def _build_birthday_section(self):
         card = self._card("Date of birth")
@@ -525,7 +558,7 @@ class StubbornSignupApp:
             wraplength=460,
             justify="left",
         ).pack(anchor="w", pady=(0, 10))
- 
+
         reel = ttk.Frame(card)
         reel.pack(anchor="w")
         self.birthday_slots = []
@@ -545,12 +578,12 @@ class StubbornSignupApp:
             )
             slot.pack(side="left", padx=2)
             self.birthday_slots.append(slot)
- 
+
         self.birthday_status = ttk.Label(
             card, text="No birthday generated yet.", foreground=MUTED
         )
         self.birthday_status.pack(anchor="w", pady=(10, 10))
- 
+
         self.birthday_btn = ttk.Button(
             card,
             text="Generate my birthday",
@@ -558,7 +591,7 @@ class StubbornSignupApp:
             command=self._generate_birthday,
         )
         self.birthday_btn.pack(anchor="w")
- 
+
     def _get_pi_birthday(self):
         while True:
             i = random.randint(0, len(PI_DIGITS) - 1)
@@ -566,12 +599,12 @@ class StubbornSignupApp:
             d, m, y = int(seq[:2]), int(seq[2:4]), int(seq[4:])
             if 1 <= m <= 12 and 1 <= d <= calendar.monthrange(2000 + y, m)[1]:
                 return seq
- 
+
     def _generate_birthday(self):
         self.birthday_btn.config(state="disabled")
         self.birthday_status.config(text="Rolling...", foreground=MUTED)
         seq = self._get_pi_birthday()
- 
+
         def reveal(pos, ticks=6):
             if pos == 6:
                 self.form_state["birthday_ok"] = True
@@ -588,26 +621,26 @@ class StubbornSignupApp:
             self.root.after(
                 40, reveal, pos if ticks else pos + 1, max(ticks - 1, 0) if ticks else 6
             )
- 
+
         reveal(0)
- 
+
     def _reset_birthday(self):
         self.form_state["birthday_ok"] = False
         for slot in self.birthday_slots:
             slot.config(text="-")
         self.birthday_status.config(text="No birthday generated yet.", foreground=MUTED)
         self.birthday_btn.config(state="normal", text="Generate my birthday")
- 
+
     # -- section: terms & conditions --------------------------------------
     def _build_terms_section(self):
         card = self._card("Terms and Conditions")
- 
+
         text_frame = tk.Frame(card, bg=CARD)
         text_frame.pack(fill="both", expand=True)
- 
+
         scrollbar = ttk.Scrollbar(text_frame, orient="vertical")
         scrollbar.pack(side="right", fill="y")
- 
+
         self.terms_widget = tk.Text(
             text_frame,
             wrap="word",
@@ -625,7 +658,7 @@ class StubbornSignupApp:
         self.terms_widget.config(state="disabled")
         self.terms_widget.pack(side="left", fill="both", expand=True)
         scrollbar.config(command=self.terms_widget.yview)
- 
+
         word_count = len(TERMS_TEXT.split())
         self.terms_min_seconds = max(8, int(word_count / 200 * 60))
         self.terms_read_state = {
@@ -633,7 +666,7 @@ class StubbornSignupApp:
             "min_time_elapsed": False,
             "seconds_remaining": self.terms_min_seconds,
         }
- 
+
         self.terms_progress = ttk.Label(
             card,
             text=f"Please read the full document (~{self.terms_min_seconds}s).",
@@ -641,10 +674,10 @@ class StubbornSignupApp:
             wraplength=460,
         )
         self.terms_progress.pack(anchor="w", pady=(8, 0))
- 
+
         self.terms_timer_label = ttk.Label(card, text="", foreground=MUTED)
         self.terms_timer_label.pack(anchor="w")
- 
+
         self.terms_agree_var = tk.BooleanVar(value=False)
         self.terms_check = ttk.Checkbutton(
             card,
@@ -654,30 +687,30 @@ class StubbornSignupApp:
             command=self._on_terms_change,
         )
         self.terms_check.pack(anchor="w", pady=(8, 0))
- 
+
         def check_scroll_position():
             top, bottom = self.terms_widget.yview()
             if bottom >= 0.999:
                 self.terms_read_state["scrolled_to_bottom"] = True
                 self._try_unlock_terms()
- 
+
         def on_scroll_event(event=None):
             card.after(50, check_scroll_position)
- 
+
         def on_key_scroll(event):
             if event.keysym == "End":
                 return "break"
             card.after(50, check_scroll_position)
- 
+
         self.terms_widget.bind("<MouseWheel>", on_scroll_event)
         self.terms_widget.bind("<Button-4>", on_scroll_event)
         self.terms_widget.bind("<Button-5>", on_scroll_event)
         scrollbar.bind("<B1-Motion>", on_scroll_event)
         scrollbar.bind("<ButtonRelease-1>", on_scroll_event)
         self.terms_widget.bind("<Key>", on_key_scroll)
- 
+
         self._tick_terms_countdown()
- 
+
     def _try_unlock_terms(self):
         state = self.terms_read_state
         if state["scrolled_to_bottom"] and state["min_time_elapsed"]:
@@ -693,7 +726,7 @@ class StubbornSignupApp:
         if not state["min_time_elapsed"]:
             missing.append("finish the minimum reading time")
         self.terms_progress.config(text="Please " + " and ".join(missing) + ".", foreground=MUTED)
- 
+
     def _tick_terms_countdown(self):
         remaining = self.terms_read_state["seconds_remaining"]
         if remaining <= 0:
@@ -704,11 +737,11 @@ class StubbornSignupApp:
         self.terms_timer_label.config(text=f"Time remaining before you can tick the box: {remaining}s")
         self.terms_read_state["seconds_remaining"] = remaining - 1
         self.root.after(1000, self._tick_terms_countdown)
- 
+
     def _on_terms_change(self):
         self.form_state["terms_ok"] = self.terms_agree_var.get()
         self._refresh_submit_state()
- 
+
     def _reset_terms(self):
         self.terms_read_state["scrolled_to_bottom"] = False
         self.terms_read_state["min_time_elapsed"] = False
@@ -721,7 +754,7 @@ class StubbornSignupApp:
         )
         self.form_state["terms_ok"] = False
         self._tick_terms_countdown()
- 
+
     # -- section: submit -----------------------------------------------
     def _build_submit_section(self):
         card = self._card("Finish up")
@@ -729,13 +762,17 @@ class StubbornSignupApp:
             card, text="Fill everything above to unlock account creation.", foreground=MUTED, wraplength=460
         )
         self.submit_hint.pack(anchor="w", pady=(0, 10))
- 
+
+        # Its own style so the strobe loop can flash this button alone
+        # without touching every other Accent.TButton in the app.
         self.submit_btn = ttk.Button(
-            card, text="Create Account", style="Accent.TButton", command=self._on_submit
+            card, text="CREATE ACCOUNT!!!", style="Submit.TButton", command=self._on_submit
         )
-        self.submit_btn.pack(anchor="w")
- 
+        self.submit_btn.pack(anchor="w", ipadx=10, ipady=4)
+
     def _refresh_submit_state(self):
+        # Purely cosmetic now - the button below ignores all of this and
+        # redirects unconditionally, but the hint still pretends to care.
         missing = []
         if not self.form_state["password_ok"]:
             missing.append("an accepted password")
@@ -753,22 +790,35 @@ class StubbornSignupApp:
             self.submit_hint.config(
                 text="Everything looks in order. Ready when you are.", foreground=SUCCESS
             )
- 
+
     def _on_submit(self):
-        if not self.username_entry.get().strip():
-            self.submit_hint.config(text="You forgot a username.", foreground=ERROR)
-            return
-        if not all(self.form_state.values()):
-            self._refresh_submit_state()
-            return
-        # Everything is satisfied - time for the real reward.
+        # Stubborn by design: it doesn't matter what has or hasn't been
+        # filled in - clicking this button always redirects.
         webbrowser.open(RICKROLL_URL)
- 
+
+    # -- strobe / marquee (cosmetic ugliness) ------------------------------
+    def _tick_strobe(self):
+        color = STROBE_COLORS[self._strobe_index % len(STROBE_COLORS)]
+        self._strobe_index += 1
+
+        self.marquee_label.config(bg=color)
+        style = ttk.Style(self.root)
+        style.configure("Submit.TButton", background=color, foreground="#ffffff", font=FONT_BTN, borderwidth=0)
+        style.map("Submit.TButton", background=[("active", color)])
+
+        self.root.after(400, self._tick_strobe)
+
+    def _tick_marquee(self):
+        text = MARQUEE_MESSAGES[self._marquee_index % len(MARQUEE_MESSAGES)]
+        self._marquee_index += 1
+        self.marquee_label.config(text=text)
+        self.root.after(1600, self._tick_marquee)
+
     # -- countdown that wipes the form -----------------------------------
     def _start_countdown(self):
         self.time_left = TOTAL_TIME
         self._tick_countdown()
- 
+
     def _tick_countdown(self):
         if self.time_left <= 0:
             self.timer_label.config(text="TIME'S UP! Starting over...")
@@ -777,7 +827,7 @@ class StubbornSignupApp:
         self.timer_label.config(text=f"Time remaining to complete signup: {self.time_left}s")
         self.time_left -= 1
         self._countdown_job = self.root.after(1000, self._tick_countdown)
- 
+
     def _reset_form(self):
         self.username_entry.delete(0, tk.END)
         self.password_entry.delete(0, tk.END)
@@ -788,13 +838,13 @@ class StubbornSignupApp:
         self._reset_terms()
         self._refresh_submit_state()
         self._start_countdown()
- 
- 
+
+
 def main():
     root = tk.Tk()
     StubbornSignupApp(root)
     root.mainloop()
- 
- 
+
+
 if __name__ == "__main__":
     main()
